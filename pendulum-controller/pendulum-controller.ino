@@ -92,10 +92,13 @@ L6474_init_t stepper_config = {
 // Globals
 RotaryEncoder *encoder = nullptr;
 volatile int led_state = 0;
-SPIClass dev_spi(STP_SPI_MOSI_PIN, STP_SPI_MISO_PIN, STP_SPI_SCK_PIN);
+SPIClass dev_spi(STP_SPI_MOSI_PIN, STP_SPI_MISO_PIN, STP_SPI_SCK_PIN); // SPIClass dev_spi(D11, D12, D13);
 L6474 *stepper;
 ControlComms ctrl;
 unsigned int div_per_step = 16;
+
+unsigned int loop_count = 0;
+int test_rotate_direction = 1;
 
 /******************************************************************************
  * Interrupt service routines (ISRs)
@@ -261,7 +264,7 @@ void setup() {
     STP_PWM_PIN,
     STP_SPI_CS_PIN,
     &dev_spi
-  );
+  ); // new L6474(D2, D8, D7, D9, D10, &dev_spi);
   if (stepper->init(&stepper_config) != COMPONENT_OK) {
     Serial.println("ERROR: Could not initialize stepper driver");
     while(1);
@@ -289,11 +292,13 @@ void loop() {
   float observation[NUM_OBS];
   ControlComms::StatusCode rx_code;
 
-  digitalWrite(LED_PIN, HIGH);
-  delay(1000);
-  digitalWrite(LED_PIN, LOW);
-  delay(1000);
-  Serial.println("Ayane Goto-Hishinuma");
+  // digitalWrite(LED_PIN, HIGH);
+  // delay(1000);
+  // digitalWrite(LED_PIN, LOW);
+  // delay(1000);
+
+  delay(20);
+  // Serial.println("Ayane Goto-Hishinuma");
 
   // // Receive
   // rx_code = ctrl.receive_action<NUM_ACTIONS>(&command, action);
@@ -319,11 +324,28 @@ void loop() {
 
   //   // Read encoder and stepper angles (in degrees)
     observation[0] = get_encoder_angle();
-    Serial.print("EncPos : ");
-    Serial.println(observation[0]);
+    Serial.print("Enc : ");
+    Serial.print(observation[0]);
     observation[1] = get_stepper_angle();
-    Serial.print("MotorPos : ");
-    Serial.println(observation[1]);
+    Serial.print(", Stepper : ");
+    Serial.print(observation[1]);
+    Serial.print(", Loop : ");
+    Serial.println(loop_count);
+
+    float turning_angle_deg = 30.0;
+    if (observation[1]>turning_angle_deg)
+    {
+      test_rotate_direction = -1;
+      Serial.println("negative");
+    }
+    if (observation[1]<10.0)
+    {
+      test_rotate_direction = +1;
+      Serial.println("positive");
+
+    }
+    move_stepper_by(test_rotate_direction*0.3);
+
 
 
   //   // Determine motor status
@@ -340,6 +362,7 @@ void loop() {
   // } else if (rx_code == ControlComms::ERROR) {
   //   Serial.println("Error receiving actions");
   // }
+  loop_count++;
 }
 
 
