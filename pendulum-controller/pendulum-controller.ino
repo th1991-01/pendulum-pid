@@ -16,7 +16,7 @@
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted.
  * 
- * THE SOFTWARE IS PROVIDED “AS IS” AND THE AUTHOR DISCLAIMS ALL
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
  * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
  * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY
@@ -29,10 +29,10 @@
 #include "L6474.h"
 #include "control-comms.hpp"
 
+
 /******************************************************************************
  * Constants and globals
  */
-
 // Pin definitions
 const int LED_PIN = LED_BUILTIN;
 const int ENC_A_PIN = D4;     // Green wire
@@ -100,7 +100,6 @@ unsigned int div_per_step = 16;
 /******************************************************************************
  * Interrupt service routines (ISRs)
  */
-
 // Stepper interrupt service routine (timer)
 void stepperISR(void) {
 
@@ -223,6 +222,7 @@ void set_step_mode(int mode) {
   }
 }
 
+
 /******************************************************************************
  * Main
  */
@@ -234,8 +234,12 @@ void setup() {
   pinMode(D4, INPUT_PULLUP);
   pinMode(D5, INPUT_PULLUP);
 
-  // Initialize our communication interface
-  Serial.begin(BAUD_RATE);
+  // // Initialize our communication interface
+  Serial.begin(9600);
+//   // Serial.begin(BAUD_RATE); // こっちだと（設定を変えないと）serial printがうまく表示されない
+  delay(100);
+
+
   ctrl.init(Serial, CTRL_DEBUG);
 
   // Configure encoder
@@ -249,7 +253,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ENC_A_PIN), encoderISR, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENC_B_PIN), encoderISR, CHANGE);
 
-  // Initialize stepper motor control
+  // // Initialize stepper motor control
   stepper = new L6474(
     STP_FLAG_IRQ_PIN,
     STP_STBY_RST_PIN,
@@ -263,13 +267,19 @@ void setup() {
     while(1);
   }
 
+
   // Attach and enable stepper motor interrupt handlers
   stepper->attach_flag_irq(&stepperISR);
   stepper->enable_flag_irq();
 
   // Set current position as home
   stepper->set_home();
+
+  Serial.println("complete setup()");
+
 }
+
+
 
 void loop() {
 
@@ -279,44 +289,61 @@ void loop() {
   float observation[NUM_OBS];
   ControlComms::StatusCode rx_code;
 
-  // Receive
-  rx_code = ctrl.receive_action<NUM_ACTIONS>(&command, action);
-  if (rx_code == ControlComms::OK) {
+  digitalWrite(LED_PIN, HIGH);
+  delay(1000);
+  digitalWrite(LED_PIN, LOW);
+  delay(1000);
+  Serial.println("Ayane Goto-Hishinuma");
 
-    // Move the stepper as requested
-    switch (command) {
-      case CMD_SET_HOME:
-        set_stepper_home();
-        break;
-      case CMD_MOVE_TO:
-        move_stepper_to(action[0]);
-        break;
-      case CMD_MOVE_BY:
-        move_stepper_by(action[0]);
-        break;
-      case CMD_SET_STEP_MODE:
-        set_step_mode((unsigned int)action[0]);
-        set_stepper_home();
-      default:
-        break;
-    }
+  // // Receive
+  // rx_code = ctrl.receive_action<NUM_ACTIONS>(&command, action);
+  // if (rx_code == ControlComms::OK) {
 
-    // Read encoder and stepper angles (in degrees)
+  //   // Move the stepper as requested
+  //   switch (command) {
+  //     case CMD_SET_HOME:
+  //       set_stepper_home();
+  //       break;
+  //     case CMD_MOVE_TO:
+  //       move_stepper_to(action[0]);
+  //       break;
+  //     case CMD_MOVE_BY:
+  //       move_stepper_by(action[0]);
+  //       break;
+  //     case CMD_SET_STEP_MODE:
+  //       set_step_mode((unsigned int)action[0]);
+  //       set_stepper_home();
+  //     default:
+  //       break;
+  //   }
+
+  //   // Read encoder and stepper angles (in degrees)
     observation[0] = get_encoder_angle();
+    Serial.print("EncPos : ");
+    Serial.println(observation[0]);
     observation[1] = get_stepper_angle();
+    Serial.print("MotorPos : ");
+    Serial.println(observation[1]);
 
-    // Determine motor status
-    if (stepper->get_device_state() != INACTIVE) {
-      status = STATUS_STP_MOVING;
-    } else {
-      status = STATUS_OK;
-    }
 
-    // Send back observation
-    ctrl.send_observation(status, millis(), false, observation, NUM_OBS);
+  //   // Determine motor status
+  //   if (stepper->get_device_state() != INACTIVE) {
+  //     status = STATUS_STP_MOVING;
+  //   } else {
+  //     status = STATUS_OK;
+  //   }
+
+  //   // Send back observation
+  //   ctrl.send_observation(status, millis(), false, observation, NUM_OBS);
   
-  // Handle receiver error (ignore "RX_EMPTY" case)
-  } else if (rx_code == ControlComms::ERROR) {
-    Serial.println("Error receiving actions");
-  }
+  // // Handle receiver error (ignore "RX_EMPTY" case)
+  // } else if (rx_code == ControlComms::ERROR) {
+  //   Serial.println("Error receiving actions");
+  // }
 }
+
+
+
+
+
+
