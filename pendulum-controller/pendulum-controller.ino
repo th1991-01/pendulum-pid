@@ -47,7 +47,8 @@ const int8_t STP_SPI_MISO_PIN = D12;
 const int8_t STP_SPI_SCK_PIN = D13;
 
 // Communication constants
-static const unsigned int BAUD_RATE = 500000;
+// static const unsigned int BAUD_RATE = 500000;
+static const unsigned int BAUD_RATE = 1000000;
 static const ControlComms::DebugLevel CTRL_DEBUG = ControlComms::DEBUG_ERROR;
 static constexpr size_t NUM_ACTIONS = 1;
 static constexpr size_t NUM_OBS = 2;
@@ -236,7 +237,10 @@ void setup() {
 
   // Initialize our communication interface
   Serial.begin(BAUD_RATE);
+  Serial.println("");
+  Serial.println("start setup()");
   ctrl.init(Serial, CTRL_DEBUG);
+  Serial.println("complete ctrl.init()");
 
   // Configure encoder
   encoder = new RotaryEncoder(
@@ -269,6 +273,8 @@ void setup() {
 
   // Set current position as home
   stepper->set_home();
+
+  Serial.println("complete setup()");
 }
 
 void loop() {
