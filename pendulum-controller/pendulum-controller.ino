@@ -159,8 +159,8 @@ float get_stepper_angle() {
   pos = stepper->get_position();
 
   // Convert to degrees
-  pos = pos % (STP_STEPS_PER_ROTATION * div_per_step);
-  pos = pos >= 0 ? pos : pos + (STP_STEPS_PER_ROTATION * div_per_step);
+  // pos = pos % (STP_STEPS_PER_ROTATION * div_per_step);
+  // pos = pos >= 0 ? pos : pos + (STP_STEPS_PER_ROTATION * div_per_step);
   deg = (float)pos * (360.0 / (STP_STEPS_PER_ROTATION * div_per_step));
 
   return deg;
